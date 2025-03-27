@@ -12,12 +12,14 @@ void main() async {
     options: DefaultFirebaseOptions.web,
   );
   runApp(EmpowerApp());
+  
 }
 
 class EmpowerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false, // ปิด Debug Banner ตรงนี้
       title: 'Health Power',
       theme: ThemeData(
         primarySwatch: Colors.blue,
