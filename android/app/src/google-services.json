@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "423460179901",
+    "project_id": "agile-b3df1",
+    "storage_bucket": "agile-b3df1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:423460179901:android:9ab722a6a0b426378dccd4",
+        "android_client_info": {
+          "package_name": "com.agile.EmpowerHealth"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChqpEbFQhJkjbUdXg-6C5XrjWiA5m74E4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
