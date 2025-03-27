@@ -68,7 +68,6 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
       return;
     }
 
-    // ตรวจสอบรูปแบบวันที่ก่อนแปลงเป็น DateTime
     final datePattern = RegExp(r'^\d{1,2}/\d{1,2}/\d{4}$');
     if (!datePattern.hasMatch(_dateController.text)) {
       ScaffoldMessenger.of(
@@ -92,7 +91,6 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
       return;
     }
 
-    // ตรวจสอบเวลาว่าเลยเวลาปัจจุบันแล้วหรือยัง
     final now = DateTime.now();
     final selectedTimeParts = _selectedTime!.split(' - ');
     final selectedStartTime = selectedDate.add(
@@ -103,10 +101,27 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
     );
 
     if (selectedStartTime.isBefore(now)) {
-      // แสดง log หากเลือกเวลาที่เลยไปแล้ว
-      print("เวลาที่เลือก ${_selectedTime} เลยเวลาปัจจุบันแล้ว: ${now}");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("ไม่สามารถเลือกเวลาที่เลยไปแล้วได้")),
+      );
+      return;
+    }
+
+    // ตรวจสอบจำนวนการจองใน Firestore
+    final querySnapshot =
+        await FirebaseFirestore.instance
+            .collection('QueueBooking')
+            .where('Date', isEqualTo: Timestamp.fromDate(selectedDate))
+            .where('Time', isEqualTo: _selectedTime)
+            .get();
+
+    if (querySnapshot.docs.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "การจองช่วงเวลาและวันดังกล่าวเต็มแล้ว โปรดเลือกช่วงเวลาอื่นหรือวันอื่น",
+          ),
+        ),
       );
       return;
     }
@@ -119,7 +134,6 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
     );
 
     try {
-      // บันทึกข้อมูลลง Firestore
       await FirebaseFirestore.instance.collection('QueueBooking').add({
         'Date': Timestamp.fromDate(selectedDate),
         'Time': _selectedTime,
@@ -136,7 +150,7 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
         'Detail': _detailsController.text.trim(),
       });
 
-      Navigator.pop(context); // ปิด dialog loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("จองคิวสำเร็จ!")));
@@ -151,9 +165,9 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
         _selectedSymptom = null;
         _selectedAllergy = null;
         _selectedGender = null;
-        _selectedAge = 1;
-        _selectedWeight = 1.0;
-        _selectedHeight = 50.0;
+        _selectedAge = 20;
+        _selectedWeight = 50.0;
+        _selectedHeight = 160.0;
       });
     } catch (e) {
       Navigator.pop(context);
