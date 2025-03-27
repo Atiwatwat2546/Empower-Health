@@ -61,6 +61,55 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final TextEditingController _resetEmailController = TextEditingController();
+        return AlertDialog(
+          title: Text("Reset Password",style: TextStyle(color: Colors.blue[900]),),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Enter your email to receive a password reset link.",style: TextStyle(color: Colors.blue[900]),),
+              SizedBox(height: 10),
+              TextField(
+                controller: _resetEmailController,
+                decoration: InputDecoration(labelText: "Email"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // ปิด Popup
+              },
+              child: Text("Cancel",style: TextStyle(color: Colors.red),),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  await _auth.sendPasswordResetEmail(
+                    email: _resetEmailController.text.trim(),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Password reset email sent! Please check your email.",style: TextStyle(color: Colors.blue[900]),)),
+                  );
+                  Navigator.pop(context); // ปิด Popup หลังจากส่งอีเมลสำเร็จ
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: ${e.toString()}")),
+                  );
+                }
+              },
+              child: Text("Send Reset Email",style: TextStyle(color: Colors.blue[900]),),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _emailFocusNode.dispose();
@@ -73,13 +122,13 @@ class _LoginPageState extends State<LoginPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(255, 98, 160, 226),
-                Color.fromARGB(255, 2, 11, 138),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            colors: [
+              Color.fromARGB(255, 98, 160, 226),
+              Color.fromARGB(255, 2, 11, 138),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
         child: Center(
           child: Card(
@@ -184,6 +233,16 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: Text(
                       "Don't have an account? Sign up",
+                      style: TextStyle(color: Colors.blue[900]),
+                    ),
+                  ),
+
+                  SizedBox(height: 10),
+                  // ปุ่ม Forgot Password
+                  TextButton(
+                    onPressed: _resetPassword,
+                    child: Text(
+                      "Forgot Password?",
                       style: TextStyle(color: Colors.blue[900]),
                     ),
                   ),
