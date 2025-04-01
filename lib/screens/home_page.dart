@@ -7,19 +7,34 @@ import 'queue_booking.dart';
 import 'dashboard.dart';
 import 'login_page.dart';
 
-
 class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
   String userName = ''; // ตัวแปรเก็บชื่อผู้ใช้
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 1),
+    )..repeat(reverse: true);
+    
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOutCubic),
+    );
     _getUserName();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _getUserName() async {
@@ -83,10 +98,18 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SvgPicture.asset(
-                    'assets/images/health-svgrepo-com.svg',
-                    height: 180,
-                    color: Colors.white,
+                  AnimatedBuilder(
+                    animation: _scaleAnimation,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _scaleAnimation.value,
+                        child: SvgPicture.asset(
+                          'assets/images/health-svgrepo-com.svg',
+                          height: 180,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(height: 16),
                   Text(
@@ -122,7 +145,7 @@ class _HomePageState extends State<HomePage> {
       ),
       onPressed: () async {
         await Firebase.initializeApp();
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+        _navigateWithFadeTransition(context, page);
       },
       child: Text(text),
     );
@@ -138,13 +161,26 @@ class _HomePageState extends State<HomePage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       onPressed: () {
-        // เปลี่ยนหน้าไปที่ SOSPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => SOSPage()),
-        );
+        _navigateWithFadeTransition(context, SOSPage());
       },
       child: Text('SOS'),
     );
+  }
+
+  void _navigateWithFadeTransition(BuildContext context, Widget page) {
+    Navigator.push(context, PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return FadeTransition(
+          opacity: animation,
+          child: page,
+        );
+      },
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+    ));
   }
 }

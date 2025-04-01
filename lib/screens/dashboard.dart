@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'notification_service.dart';  // เพิ่มการ import notification_service.dart
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'notification_service.dart'; // เพิ่มการ import notification_service.dart
 
 class DashboardPage extends StatefulWidget {
   @override
@@ -17,7 +18,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    _deleteExpiredBookings();  // ลบข้อมูลที่เลยเวลาอัตโนมัติ
+    _deleteExpiredBookings(); // ลบข้อมูลที่เลยเวลาอัตโนมัติ
     _notificationService.initializeNotifications(); // เริ่มต้นการแจ้งเตือน
   }
 
@@ -167,7 +168,12 @@ class _DashboardPageState extends State<DashboardPage> {
                       .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
+                  return Center(
+                    child: SpinKitThreeBounce(
+                      color: Colors.blue, // หรือสีที่คุณต้องการ
+                      size: 50.0, // ขนาดของ spinkit
+                    ),
+                  );
                 }
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                   return Center(child: Text("ไม่มีการจองคิว"));
@@ -225,10 +231,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ),
                                   actions: [
                                     TextButton(
-                                      onPressed:
-                                          () => Navigator.pop(
-                                            context,
-                                          ), // ปิด Dialog หลัก
+                                      onPressed: () => Navigator.pop(context),
                                       child: Text("ปิด"),
                                     ),
                                     TextButton(
@@ -247,21 +250,22 @@ class _DashboardPageState extends State<DashboardPage> {
                                                   ),
                                                 ),
                                                 content: Text(
-                                                  "คุณแน่ใจหรือไม่ว่าต้องการลบการจองนี้?",style: TextStyle(color: Colors.red),
+                                                  "คุณแน่ใจหรือไม่ว่าต้องการลบการจองนี้?",
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                  ),
                                                 ),
                                                 actions: [
                                                   TextButton(
                                                     onPressed:
                                                         () => Navigator.pop(
                                                           context,
-                                                        ), // ปิด Dialog ยืนยัน
+                                                        ),
                                                     child: Text("ยกเลิก"),
                                                   ),
                                                   TextButton(
                                                     onPressed: () {
-                                                      Navigator.pop(
-                                                        context,
-                                                      ); // ปิด Dialog ยืนยัน
+                                                      Navigator.pop(context);
                                                       _deleteBooking(
                                                         doc.id,
                                                       ); // ลบข้อมูลจริง
@@ -340,11 +344,7 @@ class _DashboardPageState extends State<DashboardPage> {
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         children: [
-          Icon(
-            Icons.info,
-            size: 18,
-            color: Color.fromARGB(255, 157, 211, 255),
-          ),
+          Icon(Icons.info, size: 18, color: Color.fromARGB(255, 157, 211, 255)),
           SizedBox(width: 10),
           Text(
             stat,

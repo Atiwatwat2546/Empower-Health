@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'login_page.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -9,57 +10,44 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-  final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
-  String? _gender = 'Male'; // Default gender
-
-  final FocusNode _emailFocusNode = FocusNode();
+  final _auth = FirebaseAuth.instance;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _fullNameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
+  String? _gender = 'Male';
   bool _isChecked = false;
   String? _errorMessage;
-
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-
   bool _signUpSuccess = false;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration.zero, () {
-      FocusScope.of(context).requestFocus(_emailFocusNode);
-    });
-  }
+  bool _isLoading = false;
 
   Future<void> _signUp() async {
-    if (!_isChecked) {
-      setState(() {
-        _errorMessage = 'You must accept the Terms & Conditions!';
-      });
-      return;
-    }
+    if (!_isChecked)
+      return setState(
+        () => _errorMessage = 'You must accept the Terms & Conditions!',
+      );
     if (_passwordController.text.trim() !=
         _confirmPasswordController.text.trim()) {
-      setState(() {
-        _errorMessage = 'Passwords do not match!';
-      });
-      return;
+      return setState(() => _errorMessage = 'Passwords do not match!');
     }
 
+    // Show loading indicator
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null; // Clear previous error messages
+    });
+
     try {
-      // Create user in Firebase Authentication
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
 
-      // Add additional user data to Firestore
       await FirebaseFirestore.instance
           .collection('User')
           .doc(userCredential.user!.uid)
@@ -71,62 +59,64 @@ class _SignUpPageState extends State<SignUpPage> {
             'email': _emailController.text.trim(),
           });
 
-      // Show success message
       setState(() {
         _signUpSuccess = true;
+        _isLoading = false; // Hide loading indicator
       });
 
-      // Navigate to login page after 2 seconds
+      // Wait for 2 seconds and then navigate to the login page
       Future.delayed(Duration(seconds: 2), () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => LoginPage()),
+          MaterialPageRoute(builder: (_) => LoginPage()),
         );
       });
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
+        _isLoading = false; // Hide loading indicator if there's an error
       });
     }
   }
 
-  void _showPolicyDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Terms & Conditions"),
-          content: SingleChildScrollView(
-            child: Text(
-              "ยอมรับไปสะ ถ้ามึงจะใช้อะนะ",
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Date Picker function for DOB
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
+  Future<void> _selectDate() async {
+    DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime(2101),
     );
-    if (pickedDate != null && pickedDate != DateTime.now()) {
-      setState(() {
-        _dobController.text =
-            "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-      });
+    if (pickedDate != null) {
+      setState(
+        () =>
+            _dobController.text =
+                "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}",
+      );
     }
+  }
+
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    bool obscureText = false,
+    VoidCallback? toggleVisibility,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon:
+            toggleVisibility != null
+                ? IconButton(
+                  icon: Icon(
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: toggleVisibility,
+                )
+                : null,
+      ),
+    );
   }
 
   @override
@@ -135,13 +125,10 @@ class _SignUpPageState extends State<SignUpPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(255, 98, 160, 226),
-                Color.fromARGB(255, 2, 11, 138),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
+            colors: [Color(0xFF62A0E2), Color(0xFF020B8A)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
         child: Center(
           child: Card(
@@ -164,139 +151,82 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   SizedBox(height: 16),
-                  TextField(
-                    controller: _emailController,
-                    focusNode: _emailFocusNode,
-                    decoration: InputDecoration(labelText: "Email"),
-                  ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _passwordController,
+                  _buildTextField("Email", _emailController),
+                  _buildTextField(
+                    "Password",
+                    _passwordController,
                     obscureText: !_isPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: "Password",
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                    toggleVisibility:
+                        () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
-                      ),
-                    ),
                   ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _confirmPasswordController,
+                  _buildTextField(
+                    "Confirm Password",
+                    _confirmPasswordController,
                     obscureText: !_isConfirmPasswordVisible,
-                    decoration: InputDecoration(
-                      labelText: "Confirm Password",
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _isConfirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                    toggleVisibility:
+                        () => setState(
+                          () =>
+                              _isConfirmPasswordVisible =
+                                  !_isConfirmPasswordVisible,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _isConfirmPasswordVisible =
-                                !_isConfirmPasswordVisible;
-                          });
-                        },
-                      ),
+                  ),
+                  _buildTextField("Full Name", _fullNameController),
+                  _buildTextField("Phone Number", _phoneController),
+                  GestureDetector(
+                    onTap: _selectDate,
+                    child: AbsorbPointer(
+                      child: _buildTextField("Date of Birth", _dobController),
                     ),
-                  ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _fullNameController,
-                    decoration: InputDecoration(labelText: "Full Name"),
-                  ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(labelText: "Phone Number"),
-                  ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: _dobController,
-                    decoration: InputDecoration(labelText: "Date of Birth"),
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
                   ),
                   SizedBox(height: 10),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
                         "Gender: ",
-                        style: TextStyle(
-                          color: Color.fromARGB(255, 21, 19, 128),
-                        ),
+                        style: TextStyle(color: Colors.blue[900]),
                       ),
-                      Radio<String>(
-                        value: 'Male',
-                        groupValue: _gender,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _gender = value;
-                          });
-                        },
-                      ),
-                      Text(
-                        "Male",
-                        style: TextStyle(
-                          color: Colors.blue[900],
-                        ),
-                      ),
-                      Radio<String>(
-                        value: 'Female',
-                        groupValue: _gender,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _gender = value;
-                          });
-                        },
-                      ),
-                      Text(
-                        "Female",
-                        style: TextStyle(
-                          color: Colors.blue[900],
-                        ),
-                      ),
-                      Radio<String>(
-                        value: 'Not specified',
-                        groupValue: _gender,
-                        onChanged: (String? value) {
-                          setState(() {
-                            _gender = value;
-                          });
-                        },
-                      ),
-                      Text(
-                        "Not specified",
-                        style: TextStyle(
-                          color: Colors.blue[900],
+                      ...["Male", "Female", "Not specified"].map(
+                        (g) => Row(
+                          children: [
+                            Radio(
+                              value: g,
+                              groupValue: _gender,
+                              onChanged: (val) => setState(() => _gender = val),
+                            ),
+                            Text(g, style: TextStyle(color: Colors.blue[900])),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
                   Row(
                     children: [
                       Checkbox(
                         value: _isChecked,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            _isChecked = value ?? false;
-                          });
-                        },
+                        onChanged:
+                            (val) => setState(() => _isChecked = val ?? false),
                       ),
                       GestureDetector(
-                        onTap: _showPolicyDialog,
+                        onTap:
+                            () => showDialog(
+                              context: context,
+                              builder:
+                                  (_) => AlertDialog(
+                                    title: Text("Terms & Conditions"),
+                                    content: Text(
+                                      "Policy",
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text("OK"),
+                                      ),
+                                    ],
+                                  ),
+                            ),
                         child: Text(
                           "I accept the Terms & Conditions",
                           style: TextStyle(
@@ -307,31 +237,26 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ],
                   ),
-                  if (_errorMessage != null) ...[
-                    SizedBox(height: 10),
+                  if (_errorMessage != null)
                     Text(_errorMessage!, style: TextStyle(color: Colors.red)),
-                  ],
-                  if (_signUpSuccess) ...[
-                    SizedBox(height: 10),
+                  if (_signUpSuccess)
                     Text(
                       "Sign Up Successful!",
                       style: TextStyle(color: Colors.green),
                     ),
-                  ],
-                  SizedBox(height: 10),
+                  SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
-                      );
-                    },
+                    onPressed:
+                        () => Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => LoginPage()),
+                        ),
                     child: Text(
                       "Already have an account? Log in here.",
                       style: TextStyle(color: Colors.blue[900]),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 10),
                   ElevatedButton(
                     onPressed: _signUp,
                     style: ElevatedButton.styleFrom(
@@ -340,17 +265,25 @@ class _SignUpPageState extends State<SignUpPage> {
                         horizontal: 50,
                         vertical: 15,
                       ),
-                      minimumSize: Size(200, 50),
+                      minimumSize: Size(1000, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
-                      "Sign Up",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
+                    child:
+                        _isLoading
+                            ? SpinKitThreeBounce (
+                              color: Colors.white,
+                              size: 50.0,
+                            )
+                            : Text(
+                              "Sign Up",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                              ),
+                            ),
                   ),
-                  
                 ],
               ),
             ),

@@ -50,9 +50,17 @@ class _LoginPageState extends State<LoginPage> {
       }
       await prefs.setBool("remember_me", _rememberMe);
 
-      Navigator.pushReplacement(
+      // การเปลี่ยนหน้าไปยัง HomePage ด้วย FadeTransition
+      // การเปลี่ยนหน้าไปยัง HomePage โดยลบหน้าล็อกอินออกจาก stack
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomePage()),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => HomePage(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+        (Route<dynamic> route) => false, // ลบทุกหน้าก่อนหน้านี้ออก
       );
     } catch (e) {
       setState(() {
@@ -65,13 +73,20 @@ class _LoginPageState extends State<LoginPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController _resetEmailController = TextEditingController();
+        final TextEditingController _resetEmailController =
+            TextEditingController();
         return AlertDialog(
-          title: Text("Reset Password",style: TextStyle(color: Colors.blue[900]),),
+          title: Text(
+            "Reset Password",
+            style: TextStyle(color: Colors.blue[900]),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Enter your email to receive a password reset link.",style: TextStyle(color: Colors.blue[900]),),
+              Text(
+                "Enter your email to receive a password reset link.",
+                style: TextStyle(color: Colors.blue[900]),
+              ),
               SizedBox(height: 10),
               TextField(
                 controller: _resetEmailController,
@@ -84,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () {
                 Navigator.pop(context); // ปิด Popup
               },
-              child: Text("Cancel",style: TextStyle(color: Colors.red),),
+              child: Text("Cancel", style: TextStyle(color: Colors.red)),
             ),
             TextButton(
               onPressed: () async {
@@ -93,7 +108,12 @@ class _LoginPageState extends State<LoginPage> {
                     email: _resetEmailController.text.trim(),
                   );
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Password reset email sent! Please check your email.",style: TextStyle(color: Colors.blue[900]),)),
+                    SnackBar(
+                      content: Text(
+                        "Password reset email sent! Please check your email.",
+                        style: TextStyle(color: Colors.blue[900]),
+                      ),
+                    ),
                   );
                   Navigator.pop(context); // ปิด Popup หลังจากส่งอีเมลสำเร็จ
                 } catch (e) {
@@ -102,7 +122,10 @@ class _LoginPageState extends State<LoginPage> {
                   );
                 }
               },
-              child: Text("Send Reset Email",style: TextStyle(color: Colors.blue[900]),),
+              child: Text(
+                "Send Reset Email",
+                style: TextStyle(color: Colors.blue[900]),
+              ),
             ),
           ],
         );
@@ -211,7 +234,10 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _signIn,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue[900],
-                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 50,
+                        vertical: 15,
+                      ),
                       minimumSize: Size(200, 50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
