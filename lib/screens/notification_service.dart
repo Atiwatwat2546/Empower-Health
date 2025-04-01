@@ -42,8 +42,7 @@ class NotificationService {
   // ฟังก์ชันการตั้งเวลาแจ้งเตือน (1 ชั่วโมงก่อนนัดหมาย)
   Future<void> scheduleNotification(DateTime dateTime) async {
     // ใช้ TZDateTime แทน DateTime
-    final location = tz.getLocation('Asia/Bangkok');
-    final scheduledDate = tz.TZDateTime.from(dateTime.subtract(Duration(hours: 1)), location);
+    tz.getLocation('Asia/Bangkok');
 
     const androidDetails = AndroidNotificationDetails(
       'channel_id',
