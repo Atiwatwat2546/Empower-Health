@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_page.dart';
 import 'package:my_app/screens/signup_page.dart';
@@ -37,35 +39,103 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _signIn() async {
     try {
-      await _auth.signInWithEmailAndPassword(
+      // ล็อกอินกับ Firebase Authentication
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      final prefs = await SharedPreferences.getInstance();
-      if (_rememberMe) {
-        await prefs.setString("remembered_email", _emailController.text.trim());
-      } else {
-        await prefs.remove("remembered_email");
-      }
-      await prefs.setBool("remember_me", _rememberMe);
+      // ดึงข้อมูลผู้ใช้จาก Firebase Authentication
+      User? user = userCredential.user;
+      if (user != null) {
+        // ตรวจสอบ status ใน Firestore
+        var userDoc =
+            await FirebaseFirestore.instance
+                .collection('User')
+                .doc(user.uid)
+                .get();
 
-      // การเปลี่ยนหน้าไปยัง HomePage ด้วย FadeTransition
-      // การเปลี่ยนหน้าไปยัง HomePage โดยลบหน้าล็อกอินออกจาก stack
-      Navigator.pushAndRemoveUntil(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => HomePage(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-        ),
-        (Route<dynamic> route) => false, // ลบทุกหน้าก่อนหน้านี้ออก
-      );
+        if (userDoc.exists) {
+          // ถ้า status เป็น 'yes'
+          if (userDoc.data()?['status'] == 'yes') {
+            // บันทึกข้อมูล email ใน SharedPreferences
+            final prefs = await SharedPreferences.getInstance();
+            if (_rememberMe) {
+              await prefs.setString(
+                "remembered_email",
+                _emailController.text.trim(),
+              );
+            } else {
+              await prefs.remove("remembered_email");
+            }
+            await prefs.setBool("remember_me", _rememberMe);
+
+            // ไปยังหน้า HomePage
+            Navigator.pushAndRemoveUntil(
+              context,
+              PageRouteBuilder(
+                pageBuilder:
+                    (context, animation, secondaryAnimation) => HomePage(),
+                transitionsBuilder: (
+                  context,
+                  animation,
+                  secondaryAnimation,
+                  child,
+                ) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
+              (Route<dynamic> route) => false, // ลบทุกหน้าก่อนหน้านี้ออก
+            );
+
+            // แสดง FlutterToast แจ้งเตือนเข้าสู่ระบบสำเร็จ
+            Fluttertoast.showToast(
+              msg: "เข้าสู่ระบบสำเร็จ!",
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              backgroundColor: Colors.green,
+              textColor: Colors.white,
+            );
+          } else {
+            // ถ้า status ไม่ใช่ 'yes'
+            setState(() {
+              _errorMessage = "บัญชีนี้ยังไม่ได้รับการอนุมัติ";
+            });
+
+            Fluttertoast.showToast(
+              msg: "บัญชีนี้ยังไม่ได้รับการอนุมัติ",
+              toastLength: Toast.LENGTH_LONG,
+              gravity: ToastGravity.CENTER,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+            );
+          }
+        } else {
+          setState(() {
+            _errorMessage = "ไม่พบข้อมูลผู้ใช้ในระบบ";
+          });
+
+          Fluttertoast.showToast(
+            msg: "ไม่พบข้อมูลผู้ใช้ในระบบ",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
+      }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
       });
+
+      Fluttertoast.showToast(
+        msg: "เกิดข้อผิดพลาด: ${e.toString()}",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+      );
     }
   }
 

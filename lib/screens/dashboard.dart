@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'notification_service.dart'; // เพิ่มการ import notification_service.dart
 
 class DashboardPage extends StatefulWidget {
@@ -41,13 +42,21 @@ class _DashboardPageState extends State<DashboardPage> {
   void _deleteBooking(String docId) async {
     try {
       await _queueCollection.doc(docId).delete();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("ลบการจองสำเร็จ!")));
+      Fluttertoast.showToast(
+        msg: "ลบการจองสำเร็จ!",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.green, // ใช้สีเขียวสำหรับการแจ้งเตือนสำเร็จ
+        textColor: Colors.white,
+      );
     } catch (error) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("เกิดข้อผิดพลาดในการลบ: $error")));
+      Fluttertoast.showToast(
+        msg: "เกิดข้อผิดพลาดในการลบ: $error",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red, // ใช้สีแดงสำหรับการแจ้งเตือนข้อผิดพลาด
+        textColor: Colors.white,
+      );
     }
   }
 

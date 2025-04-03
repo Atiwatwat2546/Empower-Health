@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:my_app/verify.dart';
 import 'login_page.dart';
 
@@ -26,64 +27,100 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _signUpSuccess = false;
   bool _isLoading = false;
 
-  Future<void> _signUp() async {
-    if (!_isChecked)
-      return setState(
-        () => _errorMessage = 'You must accept the Terms & Conditions!',
+Future<void> _signUp() async {
+  if (!_isChecked)
+    return setState(
+      () {
+        _errorMessage = 'You must accept the Terms & Conditions!';
+        Fluttertoast.showToast(
+          msg: _errorMessage!,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      },
+    );
+  if (_passwordController.text.trim() != _confirmPasswordController.text.trim()) {
+    return setState(() {
+      _errorMessage = 'Passwords do not match!';
+      Fluttertoast.showToast(
+        msg: _errorMessage!,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
       );
-    if (_passwordController.text.trim() !=
-        _confirmPasswordController.text.trim()) {
-      return setState(() => _errorMessage = 'Passwords do not match!');
-    }
+    });
+  }
 
-    // Show loading indicator
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null; // Clear previous error messages
+  // Show loading indicator
+  setState(() {
+    _isLoading = true;
+    _errorMessage = null; // Clear previous error messages
+  });
+
+  try {
+    UserCredential userCredential = await _auth
+        .createUserWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    // Save user data to Firestore including 'status' with default value 'no'
+    await FirebaseFirestore.instance
+        .collection('User')
+        .doc(userCredential.user!.uid)
+        .set({
+      'fullName': _fullNameController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'dob': _dobController.text.trim(),
+      'gender': _gender,
+      'email': _emailController.text.trim(),
+      'status': 'no', // Adding the 'status' field with 'no' value
     });
 
-    try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+    // Send verification email
+    await userCredential.user!.sendEmailVerification();
 
-      // Save user data to Firestore including 'status' with default value 'no'
-      await FirebaseFirestore.instance
-          .collection('User')
-          .doc(userCredential.user!.uid)
-          .set({
-            'fullName': _fullNameController.text.trim(),
-            'phone': _phoneController.text.trim(),
-            'dob': _dobController.text.trim(),
-            'gender': _gender,
-            'email': _emailController.text.trim(),
-            'status': 'no', // Adding the 'status' field with 'no' value
-          });
+    setState(() {
+      _signUpSuccess = true;
+      _isLoading = false; // Hide loading indicator
+    });
 
-      // Send verification email
-      await userCredential.user!.sendEmailVerification();
+    // Show success message using Fluttertoast
+    Fluttertoast.showToast(
+      msg: "Sign Up Successful! Please verify your email.",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
 
-      setState(() {
-        _signUpSuccess = true;
-        _isLoading = false; // Hide loading indicator
-      });
+    // Navigate to verify email page
+    Future.delayed(Duration(seconds: 2), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => VerifyEmailPage()),
+      );
+    });
+  } catch (e) {
+    setState(() {
+      _errorMessage = e.toString();
+      _isLoading = false; // Hide loading indicator if there's an error
+    });
 
-      // Navigate to verify email page
-      Future.delayed(Duration(seconds: 2), () {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => VerifyEmailPage()),
-        );
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false; // Hide loading indicator if there's an error
-      });
-    }
+    // Show error message using Fluttertoast
+    Fluttertoast.showToast(
+      msg: _errorMessage!,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
   }
+}
+
 
   Future<void> _selectDate() async {
     DateTime? pickedDate = await showDatePicker(

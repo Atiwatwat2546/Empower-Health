@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class QueueBookingPage extends StatefulWidget {
   @override
@@ -151,9 +152,13 @@ class _QueueBookingPageState extends State<QueueBookingPage> {
       });
 
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("จองคิวสำเร็จ!")));
+      Fluttertoast.showToast(
+        msg: "จองคิวสำเร็จ!",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.green, // ใช้สีเขียวสำหรับการแจ้งเตือนสำเร็จ
+        textColor: Colors.white,
+      );
 
       // ล้างข้อมูลหลังจากบันทึกสำเร็จ
       _dateController.clear();

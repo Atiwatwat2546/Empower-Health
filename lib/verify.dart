@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:my_app/screens/login_page.dart';
 
 class VerifyEmailPage extends StatelessWidget {
@@ -38,10 +39,14 @@ class VerifyEmailPage extends StatelessWidget {
                   final user = snapshot.data;
                   if (user != null && user.emailVerified) {
                     // หากอีเมลได้รับการยืนยันแล้ว
-                    _updateStatusToYes(user.uid); // อัพเดต status เป็น 'yes' ใน Firestore
+                    _updateStatusInFirestore(user.uid); // ใช้ uid เพื่ออ้างอิง path เอกสาร
                     Future.delayed(Duration.zero, () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Email successfully verified!")),
+                      Fluttertoast.showToast(
+                        msg: "Email successfully verified!",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
                       );
                       Navigator.pushReplacement(
                         context,
@@ -65,9 +70,13 @@ class VerifyEmailPage extends StatelessWidget {
                     await user.reload(); // รีเฟรชสถานะของผู้ใช้
                     if (user.emailVerified) {
                       // หากอีเมลได้รับการยืนยันแล้ว
-                      _updateStatusToYes(user.uid); // อัพเดต status เป็น 'yes' ใน Firestore
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Email successfully verified!")),
+                      _updateStatusInFirestore(user.uid); // ใช้ uid เพื่ออ้างอิง path เอกสาร
+                      Fluttertoast.showToast(
+                        msg: "Email successfully verified!",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.green,
+                        textColor: Colors.white,
                       );
                       Navigator.pushReplacement(
                         context,
@@ -75,8 +84,12 @@ class VerifyEmailPage extends StatelessWidget {
                       );
                     } else {
                       // หากอีเมลยังไม่ได้รับการยืนยัน
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please verify your email!")),
+                      Fluttertoast.showToast(
+                        msg: "Please verify your email!",
+                        toastLength: Toast.LENGTH_LONG,
+                        gravity: ToastGravity.CENTER,
+                        backgroundColor: Colors.red,
+                        textColor: Colors.white,
                       );
                     }
                   }
@@ -93,9 +106,22 @@ class VerifyEmailPage extends StatelessWidget {
     );
   }
 
-  // ฟังก์ชันที่ใช้ในการอัพเดต status ของผู้ใช้ใน Firestore เป็น 'yes'
-  Future<void> _updateStatusToYes(String uid) async {
-    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    await userRef.update({'status': 'yes'});  // อัพเดตสถานะเป็น 'yes'
+  // ฟังก์ชันที่ใช้ในการอัพเดต status ของผู้ใช้ใน Firestore
+  Future<void> _updateStatusInFirestore(String userUid) async {
+    final userRef = FirebaseFirestore.instance.collection('User').doc(userUid); // ใช้ uid เพื่ออ้างอิง path ของเอกสาร
+
+    // ตรวจสอบว่าเอกสารมีอยู่หรือไม่
+    final docSnapshot = await userRef.get();
+    if (docSnapshot.exists) {
+      print("Document exists, updating status to 'yes'..."); // พิมพ์ข้อมูลเพื่อดีบัก
+      // หากเอกสารมีอยู่ อัพเดต status เป็น 'yes'
+      await userRef.update({'status': 'yes'}).then((_) {
+        print("Status updated successfully!");
+      }).catchError((e) {
+        print("Error updating status: $e");
+      });
+    } else {
+      print("Document not found, user UID: $userUid");
+    }
   }
 }
