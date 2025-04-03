@@ -119,6 +119,32 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  // Helper Functions for Formatting
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0, bottom: 4.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.blue[900], // เปลี่ยนสีหัวข้อเป็นน้ำเงิน
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionContent(String content) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        content,
+        style: TextStyle(
+          color: Colors.blue[900], // เปลี่ยนสีเนื้อหาเป็นน้ำเงิน
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -214,15 +240,87 @@ class _SignUpPageState extends State<SignUpPage> {
                               context: context,
                               builder:
                                   (_) => AlertDialog(
-                                    title: Text("Terms & Conditions"),
-                                    content: Text(
-                                      "Policy",
-                                      style: TextStyle(color: Colors.black),
+                                    title: Text(
+                                      "Privacy Policy",
+                                      style: TextStyle(
+                                        color: Colors.blue[900],
+                                      ), // เปลี่ยนสีหัวข้อ
+                                    ),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          _buildSectionTitle(
+                                            "Effective Date: [25/03/2025]",
+                                          ),
+                                          _buildSectionTitle("1. Introduction"),
+                                          _buildSectionContent(
+                                            "Welcome to Empower Health. Your privacy is important to us. "
+                                            "This Privacy Policy explains how we collect, use, and protect your personal data when you use our application.",
+                                          ),
+                                          _buildSectionTitle(
+                                            "2. Information We Collect",
+                                          ),
+                                          _buildSectionContent(
+                                            "We may collect the following types of information:\n\n"
+                                            "- Personal Information: Name, email address, phone number, and other details you provide.\n"
+                                            "- Usage Data: Information about how you use the app, including interactions and preferences.\n"
+                                            "- Device Information: IP address, device type, and operating system details.",
+                                          ),
+                                          _buildSectionTitle(
+                                            "3. How We Use Your Information",
+                                          ),
+                                          _buildSectionContent(
+                                            "We use the collected information to:\n\n"
+                                            "- Provide and improve our services.\n"
+                                            "- Personalize user experience.\n"
+                                            "- Ensure security and prevent fraud.\n"
+                                            "- Communicate important updates.",
+                                          ),
+                                          _buildSectionTitle(
+                                            "4. Data Sharing and Disclosure",
+                                          ),
+                                          _buildSectionContent(
+                                            "We do not sell or rent your personal data. However, we may share it with:\n\n"
+                                            "- Service providers assisting in app functionality.\n"
+                                            "- Legal authorities if required by law.",
+                                          ),
+                                          _buildSectionTitle(
+                                            "5. Data Security",
+                                          ),
+                                          _buildSectionContent(
+                                            "We implement security measures to protect your personal data. "
+                                            "However, no method of transmission over the internet is 100% secure.",
+                                          ),
+                                          _buildSectionTitle("6. Your Rights"),
+                                          _buildSectionContent(
+                                            "You have the right to:\n\n"
+                                            "- Access, update, or delete your personal information.\n"
+                                            "- Opt-out of certain data collection practices.",
+                                          ),
+                                          _buildSectionTitle(
+                                            "7. Changes to This Policy",
+                                          ),
+                                          _buildSectionContent(
+                                            "We may update this Privacy Policy from time to time. Any changes will be notified within the app.",
+                                          ),
+                                          _buildSectionTitle("8. Contact Us"),
+                                          _buildSectionContent(
+                                            "If you have any questions about this Privacy Policy, please contact us at [Your Contact Email].",
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
-                                        child: Text("OK"),
+                                        child: Text(
+                                          "OK",
+                                          style: TextStyle(
+                                            color: Colors.blue[900],
+                                          ), // ปรับสีปุ่ม OK เป็นน้ำเงิน
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -272,7 +370,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     child:
                         _isLoading
-                            ? SpinKitThreeBounce (
+                            ? SpinKitThreeBounce(
                               color: Colors.white,
                               size: 50.0,
                             )
