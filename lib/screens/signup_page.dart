@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:my_app/verify.dart';
 import 'login_page.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -48,6 +49,7 @@ class _SignUpPageState extends State<SignUpPage> {
             password: _passwordController.text.trim(),
           );
 
+      // Save user data to Firestore including 'status' with default value 'no'
       await FirebaseFirestore.instance
           .collection('User')
           .doc(userCredential.user!.uid)
@@ -57,18 +59,22 @@ class _SignUpPageState extends State<SignUpPage> {
             'dob': _dobController.text.trim(),
             'gender': _gender,
             'email': _emailController.text.trim(),
+            'status': 'no', // Adding the 'status' field with 'no' value
           });
+
+      // Send verification email
+      await userCredential.user!.sendEmailVerification();
 
       setState(() {
         _signUpSuccess = true;
         _isLoading = false; // Hide loading indicator
       });
 
-      // Wait for 2 seconds and then navigate to the login page
+      // Navigate to verify email page
       Future.delayed(Duration(seconds: 2), () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => LoginPage()),
+          MaterialPageRoute(builder: (_) => VerifyEmailPage()),
         );
       });
     } catch (e) {
@@ -251,6 +257,9 @@ class _SignUpPageState extends State<SignUpPage> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
+                                          _buildSectionTitle(
+                                            "ทำให้แล้วนะเห้ย !!!",
+                                          ),
                                           _buildSectionTitle(
                                             "Effective Date: [25/03/2025]",
                                           ),
